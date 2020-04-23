@@ -1,0 +1,54 @@
+library(tidyverse)
+library(modelr)
+
+options(na.action = na.warm)
+# Por que los diamantes de baja calidad son mas caros----------------------------
+
+diamonds%>%
+  ggplot(aes(cut, price))+
+  geom_boxplot()
+
+diamonds%>%
+  ggplot(aes(color, price))+
+  geom_boxplot()
+
+diamonds%>%
+  ggplot(aes(clarity, price))+
+  geom_boxplot()
+
+
+
+diamonds%>%ggplot(aes(carat, price))+
+  geom_hex(bins=50)
+
+diamonds2 <- diamonds%>%
+  filter(carat <= 2.5)%>%
+  mutate(lprice= log2(price), lcarat= log2(carat))
+
+diamonds2%>%
+  ggplot(aes(lcarat, lprice))+
+  geom_hex(bins=50)
+
+mod_diamonds <- lm(lprice~lcarat, data=diamonds2)
+
+grid <- diamonds2 %>%
+  data_grid(carat= seq_range(carat, 30))%>%
+  mutate(lcarat= log2(carat))%>%
+  add_predictions(mod_diamonds,'lprice')%>%
+  mutate(price= 2^lprice)
+
+grid
+
+diamonds2%>%
+  ggplot(aes(carat,price))+
+  geom_hex(bins=50)+
+  geom_line(data=grid, color="red", size=1)
+
+
+diamonds2 <- diamonds2%>%
+  add_residuals(mod_diamonds, "lresid")
+diamonds2%>%
+  ggplot(aes(lcarat, lresid))+
+  geom_hex(bins=50)
+
+diamonds2%>% ggplot(aes(cut,lresid))+geom_boxplot()
