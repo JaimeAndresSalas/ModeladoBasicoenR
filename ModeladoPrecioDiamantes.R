@@ -1,3 +1,4 @@
+
 library(tidyverse)
 library(modelr)
 
@@ -52,3 +53,28 @@ diamonds2%>%
   geom_hex(bins=50)
 
 diamonds2%>% ggplot(aes(cut,lresid))+geom_boxplot()
+
+
+mod_diamonds2 <- lm(lprice~lcarat + color+ cut +clarity, data=diamonds2)
+
+grid <- diamonds2%>%
+  data_grid(cut, .model = mod_diamonds2)%>%
+  add_predictions(mod_diamonds2)
+grid
+ggplot(grid, aes(cut, pred))+
+  geom_point()
+
+
+diamonds2 <- diamonds2%>%
+  add_residuals(mod_diamonds2, "lresid2")
+
+ggplot(diamonds2, aes(lcarat, lresid2))+
+  geom_hex(bins=50)
+
+
+diamonds2%>%
+  filter(abs(lresid2)>1)%>%
+  add_predictions(mod_diamonds2)%>%
+  mutate(pred=round(2^pred))%>%
+  select(price, pred, carat::table, x::z)%>%
+  arrange(price)
