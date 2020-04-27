@@ -72,3 +72,24 @@ resids%>%
   geom_line(aes(group=country),alpha=0.2)+
   geom_smooth(se=FALSE)+
   facet_wrap(~continent)
+
+#Midiendo modelo con broom
+library(broom)
+
+glance(ec_mod)
+
+by_country%>%
+  mutate(glance = map(model,glance))%>%
+  unnest(glance, .drop =TRUE)
+glance%>%
+  arrange(r.squared)
+
+glance%>%
+  ggplot(aes(continent, r.squared))+
+  geom_jitter(width = 0.5)
+
+bad_fit <- filter(glance, r.squared<0.25)
+
+gapminder%>%
+  semi_join(bad_fit, by="country")
+
